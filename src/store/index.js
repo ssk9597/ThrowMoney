@@ -17,9 +17,6 @@ export default new Vuex.Store({
         registerPassword: '',
         registerMoney: 1000,
         registerError: '',
-        users: [],
-        name: '',
-        money: '',
     },
     mutations: {
         updateLoginEmail(state, email) {
@@ -42,15 +39,6 @@ export default new Vuex.Store({
         },
         updateRegisterError(state, error) {
             state.registerError = error;
-        },
-        users(state, user) {
-            state.users = user;
-        },
-        name(state, name) {
-            state.name = name;
-        },
-        money(state, money) {
-            state.money = money;
         },
         login(state) {
             firebase
@@ -103,33 +91,6 @@ export default new Vuex.Store({
                     }
                 });
         },
-        createDashBoard(state) {
-            const loginUser = firebase.auth().currentUser;
-            const db = firebase.firestore();
-
-            if (loginUser) {
-                db.collection('users')
-                    .where('name', '==', loginUser.displayName)
-                    .get()
-                    .then((querySnapshot) => {
-                        querySnapshot.forEach((doc) => {
-                            state.name = doc.data().name;
-                            state.money = doc.data().money;
-                        });
-                    });
-            }
-
-            state.users = [];
-
-            db.collection('users')
-                .get()
-                .then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        state.users.push(doc.data());
-                    });
-                });
-            console.log(state.users);
-        },
         signOut(state) {
             firebase.auth().signOut();
             state.registerUserName = '';
@@ -143,9 +104,6 @@ export default new Vuex.Store({
         },
         registerUser(context) {
             context.commit('registerUser');
-        },
-        createDashBoard(context) {
-            context.commit('createDashBoard');
         },
     },
     modules: {},
