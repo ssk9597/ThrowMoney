@@ -81,7 +81,6 @@ export default new Vuex.Store({
                             console.log('OK');
                             state.loginEmail = state.registerEmail;
                             state.loginPassword = state.registerPassword;
-                            // state.$router.push('/');
                         })
                         .catch((e) => {
                             console.log(e);
@@ -112,6 +111,9 @@ export default new Vuex.Store({
                             state.name = doc.data().name;
                             state.money = doc.data().money;
                         });
+                    })
+                    .catch(() => {
+                        alert('createDashBoardのif(loginUser)の箇所でエラー発生');
                     });
             }
 
@@ -123,6 +125,9 @@ export default new Vuex.Store({
                     querySnapshot.forEach((doc) => {
                         state.users.push(doc.data());
                     });
+                })
+                .catch(() => {
+                    alert('createDashBoardのdb.collection("users")でエラーが発生');
                 });
             console.log(state.users);
         },
