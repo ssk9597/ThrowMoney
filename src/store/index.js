@@ -17,8 +17,12 @@ export default new Vuex.Store({
         registerPassword: '',
         registerMoney: 1000,
         registerError: '',
+        users: [],
         name: '',
         money: '',
+        showWalletModal: false,
+        modalUser: '',
+        modalMoney: '',
     },
     mutations: {
         updateLoginEmail(state, email) {
@@ -42,11 +46,28 @@ export default new Vuex.Store({
         updateRegisterError(state, error) {
             state.registerError = error;
         },
+        users(state, user) {
+            state.users = user;
+        },
         name(state, name) {
             state.name = name;
         },
         money(state, money) {
             state.money = money;
+        },
+        showWalletModal(state, wallet) {
+            state.showWalletModal = wallet;
+        },
+        modalUser(state, user) {
+            state.modalUser = user;
+        },
+        modalMoney(state, money) {
+            state.modalMoney = money;
+        },
+        toggleWalletModal(state, user) {
+            state.showWalletModal = !state.showWalletModal;
+            state.modalUser = user.name;
+            state.modalMoney = user.money;
         },
         login(state) {
             firebase
