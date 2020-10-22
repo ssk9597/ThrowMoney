@@ -113,6 +113,9 @@ export default new Vuex.Store({
                 .then(() => {
                     filterArryUsers[0].money += parseInt(userTransfer);
                     console.log(filterArryUsers);
+                })
+                .catch(() => {
+                    alert('送金がうまくいきませんでした');
                 });
             state.transferMoney = '';
         },
@@ -192,6 +195,11 @@ export default new Vuex.Store({
                             state.name = doc.data().name;
                             state.money = doc.data().money;
                         });
+                    })
+                    .catch(() => {
+                        alert(
+                            'createDashBoardのif(loginUser)の箇所でエラー発生'
+                        );
                     });
             }
 
@@ -203,6 +211,11 @@ export default new Vuex.Store({
                     querySnapshot.forEach((doc) => {
                         state.users.push(doc.data());
                     });
+                })
+                .catch(() => {
+                    alert(
+                        'createDashBoardのdb.collection("users")でエラーが発生'
+                    );
                 });
         },
         signOut(state) {
