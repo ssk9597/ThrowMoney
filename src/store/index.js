@@ -91,18 +91,16 @@ export default new Vuex.Store({
 
             //ログインユーザー
             const userTransfer = state.transferMoney;
-
             db.collection('users')
                 .doc(loginUser.uid)
                 .update({
                     money: money - userTransfer,
                 });
 
+            //選択されたユーザー
             const filterArryUsers = state.users.filter((val) => {
                 return val.name === state.modalUser;
             });
-
-            //選択されたユーザー
             db.collection('users')
                 .doc(filterArryUsers[0].uid)
                 .update({
