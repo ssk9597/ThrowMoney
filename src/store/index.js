@@ -90,30 +90,46 @@ export default new Vuex.Store({
             const db = firebase.firestore();
 
             //ログインユーザー
+            const loginUserBatch = db.batch();
             const userTransfer = state.transferMoney;
-            db.collection('users')
-                .doc(loginUser.uid)
-                .update({
-                    money: money - userTransfer,
+            const users = db.collection('users');
+
+            loginUserBatch.update(users.doc(loginUser.uid), {
+                money: money - userTransfer,
+            });
+
+            loginUserBatch
+                .commit()
+                .then(() => {})
+                .catch(() => {
+                    console.log('ログインユーザーのバッチが失敗しました');
+                    alert(
+                        '送金がうまくいきませんでした。最初からやり直してください'
+                    );
                 });
 
             //選択されたユーザー
+            const selectUserBatch = db.batch();
             const filterArryUsers = state.users.filter((val) => {
                 return val.name === state.modalUser;
             });
-            db.collection('users')
-                .doc(filterArryUsers[0].uid)
-                .update({
-                    money:
-                        parseInt(filterArryUsers[0].money) +
-                        parseInt(userTransfer),
-                })
+
+            selectUserBatch.update(users.doc(filterArryUsers[0].uid), {
+                money:
+                    parseInt(filterArryUsers[0].money) + parseInt(userTransfer),
+            });
+
+            selectUserBatch
+                .commit()
                 .then(() => {
                     filterArryUsers[0].money += parseInt(userTransfer);
                     console.log(filterArryUsers);
                 })
                 .catch(() => {
-                    alert('送金がうまくいきませんでした');
+                    console.log('選択されたユーザーのバッチが失敗しました');
+                    alert(
+                        '送金がうまくいきませんでした。最初からやり直してください'
+                    );
                 });
             state.transferMoney = '';
         },
