@@ -88,55 +88,46 @@ export default new Vuex.Store({
 
             const loginUser = firebase.auth().currentUser;
             const db = firebase.firestore();
+            const collectionUsers = db.collection('users');
 
             //ログインユーザー
-            const loginUserBatch = db.batch();
             const userTransfer = state.transferMoney;
-            const users = db.collection('users');
-
-            //ログインユーザー(バッチ処理)
-            loginUserBatch.update(users.doc(loginUser.uid), {
-                money: money - userTransfer,
-            });
 
             //選択されたユーザー
-            const selectUserBatch = db.batch();
             const filterArryUsers = state.users.filter((val) => {
                 return val.name === state.modalUser;
             });
 
-            //選択されたユーザー(バッチ処理)
-            selectUserBatch.update(users.doc(filterArryUsers[0].uid), {
-                money:
-                    parseInt(filterArryUsers[0].money) + parseInt(userTransfer),
+            //バッチ処理
+            const moneyTransferBatch = db.batch();
+
+            //ログインユーザーのバッチ処理
+            moneyTransferBatch.update(collectionUsers.doc(loginUser.uid), {
+                money: money - userTransfer,
             });
 
-            //バッチ処理(コミット)
-            const batchCommit = () => {
-                loginUserBatch
-                    .commit()
-                    .then(() => {})
-                    .catch(() => {
-                        console.log('ログインユーザーのバッチが失敗しました');
-                        alert(
-                            '送金がうまくいきませんでした。最初からやり直してください'
-                        );
-                    });
+            //選択されたユーザーのバッチ処理
+            moneyTransferBatch.update(
+                collectionUsers.doc(filterArryUsers[0].uid),
+                {
+                    money:
+                        parseInt(filterArryUsers[0].money) +
+                        parseInt(userTransfer),
+                }
+            );
 
-                selectUserBatch
-                    .commit()
-                    .then(() => {
-                        filterArryUsers[0].money += parseInt(userTransfer);
-                        console.log(filterArryUsers);
-                    })
-                    .catch(() => {
-                        console.log('選択されたユーザーのバッチが失敗しました');
-                        alert(
-                            '送金がうまくいきませんでした。最初からやり直してください'
-                        );
-                    });
-            };
-            batchCommit();
+            //バッチ処理(コミット)
+            moneyTransferBatch
+                .commit()
+                .then(() => {
+                    filterArryUsers[0].money += parseInt(userTransfer);
+                    console.log(filterArryUsers);
+                })
+                .catch(() => {
+                    alert(
+                        '送金がうまくいきませんでした。最初からやり直してください'
+                    );
+                });
             state.transferMoney = '';
         },
         login(state) {
