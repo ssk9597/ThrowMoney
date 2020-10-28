@@ -15,14 +15,17 @@ export default new Vuex.Store({
         registerUserName: '',
         registerEmail: '',
         registerPassword: '',
+        registerUid: '',
         registerMoney: 1000,
         registerError: '',
         users: [],
         name: '',
         money: '',
         showWalletModal: false,
+        showTransferModal: false,
         modalUser: '',
         modalMoney: '',
+        transferMoney: '',
     },
     mutations: {
         updateLoginEmail(state, email) {
@@ -58,48 +61,117 @@ export default new Vuex.Store({
         showWalletModal(state, wallet) {
             state.showWalletModal = wallet;
         },
+        showTransferModal(state, transfer) {
+            state.showTransferModal = transfer;
+        },
         modalUser(state, user) {
             state.modalUser = user;
         },
         modalMoney(state, money) {
             state.modalMoney = money;
         },
+        transferMoney(state, money) {
+            state.transferMoney = money;
+        },
         toggleWalletModal(state, user) {
             state.showWalletModal = !state.showWalletModal;
             state.modalUser = user.name;
             state.modalMoney = user.money;
         },
+        toggleTransferModal(state, user) {
+            state.showTransferModal = !state.showTransferModal;
+            state.modalUser = user.name;
+            state.modalMoney = user.money;
+        },
+        transferCalculation(state, money) {
+            state.showTransferModal = !state.showTransferModal;
+
+            const loginUser = firebase.auth().currentUser;
+            const db = firebase.firestore();
+            const collectionUsers = db.collection('users');
+
+            //ログインユーザー
+            const userTransfer = state.transferMoney;
+
+            //選択されたユーザー
+            const filterArryUsers = state.users.filter((val) => {
+                return val.name === state.modalUser;
+            });
+
+            //バッチ処理
+            const moneyTransferBatch = db.batch();
+
+            //ログインユーザーのバッチ処理
+            moneyTransferBatch.update(collectionUsers.doc(loginUser.uid), {
+                money: money - userTransfer,
+            });
+
+            //選択されたユーザーのバッチ処理
+            moneyTransferBatch.update(
+                collectionUsers.doc(filterArryUsers[0].uid),
+                {
+                    money:
+                        parseInt(filterArryUsers[0].money) +
+                        parseInt(userTransfer),
+                }
+            );
+
+            //バッチ処理(コミット)
+            moneyTransferBatch
+                .commit()
+                .then(() => {
+                    filterArryUsers[0].money += parseInt(userTransfer);
+                    console.log(filterArryUsers);
+                })
+                .catch(() => {
+                    alert(
+                        '送金がうまくいきませんでした。最初からやり直してください'
+                    );
+                });
+            state.transferMoney = '';
+        },
         login(state) {
             firebase
                 .auth()
-                .signInWithEmailAndPassword(state.loginEmail, state.loginPassword)
+                .signInWithEmailAndPassword(
+                    state.loginEmail,
+                    state.loginPassword
+                )
                 .then((res) => {
                     console.log(res);
                 })
                 .catch(() => {
                     state.loginPassword = '';
-                    state.loginError = '入力したメールアドレスかパスワードに誤りがあります。';
+                    state.loginError =
+                        '入力したメールアドレスかパスワードに誤りがあります。';
                 });
         },
         registerUser(state) {
             const db = firebase.firestore();
             firebase
                 .auth()
-                .createUserWithEmailAndPassword(state.registerEmail, state.registerPassword)
+                .createUserWithEmailAndPassword(
+                    state.registerEmail,
+                    state.registerPassword
+                )
                 .then((res) => {
                     //displayNameにユーザー名を格納
                     res.user.updateProfile({
                         displayName: state.registerUserName,
                     });
 
+                    const loginUser = firebase.auth().currentUser;
+                    state.registerUid = loginUser.uid;
+
                     db.collection('users')
-                        .add({
+                        .doc(loginUser.uid)
+                        .set({
                             name: state.registerUserName,
                             email: state.registerEmail,
                             money: state.registerMoney,
+                            uid: state.registerUid,
                         })
                         .then(() => {
-                            console.log('OK');
                             state.loginEmail = state.registerEmail;
                             state.loginPassword = state.registerPassword;
                         })
@@ -110,9 +182,11 @@ export default new Vuex.Store({
                 .catch((e) => {
                     console.log(e);
                     if (e.code == 'auth/email-already-in-use') {
-                        state.registerError = '入力したメールアドレスは登録済みです。';
+                        state.registerError =
+                            '入力したメールアドレスは登録済みです。';
                     } else if (e.code == 'auth/weak-password') {
-                        state.registerError = 'パスワードは最低でも6文字以上にしてください';
+                        state.registerError =
+                            'パスワードは最低でも6文字以上にしてください';
                     } else {
                         state.registerError =
                             '入力したメールアドレスかパスワードに問題があります。';
@@ -134,7 +208,9 @@ export default new Vuex.Store({
                         });
                     })
                     .catch(() => {
-                        alert('createDashBoardのif(loginUser)の箇所でエラー発生');
+                        alert(
+                            'createDashBoardのif(loginUser)の箇所でエラー発生'
+                        );
                     });
             }
 
@@ -148,9 +224,10 @@ export default new Vuex.Store({
                     });
                 })
                 .catch(() => {
-                    alert('createDashBoardのdb.collection("users")でエラーが発生');
+                    alert(
+                        'createDashBoardのdb.collection("users")でエラーが発生'
+                    );
                 });
-            console.log(state.users);
         },
         signOut(state) {
             firebase.auth().signOut();
